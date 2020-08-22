@@ -15,6 +15,7 @@
 // // 管理者機能の表示設定の初期化
 // $settingAdminDisplay = "none";
 // $login = false;
+// jjjjj
 //
 // // パラメータのチェック
 // if (isset($_GET['id'])) {
