@@ -49,7 +49,7 @@ if (isset($_POST["signUp"])) {
               $errorMessage = 'すでに登録されているメールアドレスです。';
 
             } else {
-              $stmt = $pdo->prepare("INSERT INTO user(name, pw, mail, age, gender, address) VALUES (:name, :pw, :mail, :age, :gender, :address)");
+              $stmt = $pdo->prepare("INSERT INTO user(name, pw, mail, age, gender, address, user_label) VALUES (:name, :pw, :mail, :age, :gender, :address, 0)");
               $stmt->execute(array(':name' => $username, ':pw' => password_hash($password, PASSWORD_DEFAULT), ':mail' => $mail, ':age' => $age, ':gender' => $sex, ':address' => $address));  // パスワードのハッシュ化を行いインサート
               $userid = $pdo->lastinsertid();  // 登録した(DB側でauto_incrementした)IDを$useridに入れる
 
@@ -194,6 +194,9 @@ EOM;
           <div class="col-md-8">
             <div class="form-group has-feedback">
               <select class="form-control" name="age">
+              
+              <option selected  value="2021">2021年</option>
+                <option selected  value="2020">2020年</option>
                 <option selected  value="2019">2019年</option>
                 <option value="2018">2018年</option>
                 <option value="2017">2017年</option>

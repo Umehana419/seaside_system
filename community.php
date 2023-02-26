@@ -1,236 +1,219 @@
 <?php
-// session_start();
+session_start();
 
-// $db['host'] = "localhost";  // DBサーバのURL
-// $db['user'] = "g031p015";  // ユーザー名
-// $db['pass'] = "g031p015PW";  // ユーザー名のパスワード
-// $db['dbname'] = "g031p015";  // データベース名
+$db['host'] = "localhost"; // DBサーバのURL
+$db['user'] = "g031p015"; // ユーザー名
+$db['pass'] = "g031p015PW"; // ユーザー名のパスワード
+$db['dbname'] = "g031p015"; // データベース名
 
-// // ユーザ名の初期化
-// $loginName = "ゲストユーザ";
-// // エラーメッセージの初期化
-// $errorMessage = "";
-// // 表示設定の初期化
-// $settingDisplay = "";
-// // 管理者機能の表示設定の初期化
-// $settingAdminDisplay = "none";
-// $login = false;
-// jjjjj
-//
-// // パラメータのチェック
-// if (isset($_GET['id'])) {
-//     // パラメータの格納
-//     $pageID = $_GET['id'];
-//     // 認証
-//     $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
+// ユーザ名の初期化
+$loginName = "ゲストユーザ";
+// エラーメッセージの初期化
+$errorMessage = "";
+// 表示設定の初期化
+$settingDisplay = "";
+// 管理者機能の表示設定の初期化
+$settingAdminDisplay = "none";
+$login = false;
 
-//     // エラー処理
-//     try {
-//         $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION));
+// パラメータのチェック
+if (isset($_GET['id'])) {
+    // パラメータの格納
+    $pageID = $_GET['id'];
+    // 認証
+    $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
 
-//         // コミュニティとユーザ情報を取得する呪文
-//         $stmt = $pdo->prepare('SELECT community_member.communityID, community.name as communityName, community.overview, community.point, community.tag, community.policy, user.userID, user.name as userName, community_member.date as joinDate, community_member.userRole FROM community_member LEFT JOIN community ON community_member.communityID = community.communityID LEFT JOIN user ON community_member.userID = user.userID WHERE community_member.communityID = ?');
-//         $stmt->execute(array($pageID));
-//         // データ取得確認
-//         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-//             $communityName = $row['communityName'];
-//             $communityID = $row['communityID'];
-//             $communityOverview = $row['overview'];
-//             $point = $row['point'];
-//             $tag = $row['tag'];
-//             $policy = $row['policy'];
+    // エラー処理
+    try {
+        $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
 
-//             $communityMember = array(); // メンバー情報入れる変数
-//             $member_count = 0; // メンバー数
+        // コミュニティとユーザ情報を取得する呪文
+        $stmt = $pdo->prepare('SELECT community_member.communityID, community.name as communityName, community.overview, community.point, community.tag, community.policy, user.userID, user.name as userName, community_member.date as joinDate, community_member.userRole FROM community_member LEFT JOIN community ON community_member.communityID = community.communityID LEFT JOIN user ON community_member.userID = user.userID WHERE community_member.communityID = ?');
+        $stmt->execute(array($pageID));
+        // データ取得確認
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $communityName = $row['communityName'];
+            $communityID = $row['communityID'];
+            $communityOverview = $row['overview'];
+            $point = $row['point'];
+            $tag = $row['tag'];
+            $policy = $row['policy'];
 
-//             // メンバー情報格納（ifで一行目をFETCH済み）
-//             do {
-//                 $communityMember[] = array('id' => $row['userID'], 'name' => $row['userName'], 'role' => $row['userRole'], 'date' => $row['joinDate']);
-//                 $member_count++;
-//             } while ($row = $stmt->fetch(PDO::FETCH_ASSOC));
+            $communityMember = array(); // メンバー情報入れる変数
+            $member_count = 0; // メンバー数
 
-//             // 調査情報取得
-//             $stmt = $pdo->prepare('SELECT * FROM research WHERE communityID = ?');
-//             $stmt->execute(array($pageID));
+            // メンバー情報格納（ifで一行目をFETCH済み）
+            do {
+                $communityMember[] = array('id' => $row['userID'], 'name' => $row['userName'], 'role' => $row['userRole'], 'date' => $row['joinDate']);
+                $member_count++;
+            } while ($row = $stmt->fetch(PDO::FETCH_ASSOC));
 
-//             $research = array(); // 調査情報入れる変数
-//             $research_count = 0; // 調査数
+            // 調査情報取得
+            $stmt = $pdo->prepare('SELECT * FROM research WHERE communityID = ?');
+            $stmt->execute(array($pageID));
 
-//             // 調査情報格納
-//             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-//                 $research[] = array('researchName' => $row['name'], 'researchID' => $row['researchID'], 'researchStart' => $row['researchStart'], 'researchEnd' => $row['researchEnd'], 'researchOverview' => $row['researchOverview'], 'private' => $row['private']);
-//                 $research_count++;
-//             }
-//         } else {
-//             $_SESSION['message'] = "この団体は存在しません。";
-//             header("Location: index.php");  // メイン画面へ遷移
-//             exit();
-//         }
-//     } catch (PDOException $e) {
-//         $errorMessage = 'データベースエラーが発生しました。';
-//         // $e->getMessage() でエラー内容を参照可能（デバッグ時のみ表示）
-//         // echo $e->getMessage();
-//     }
-// } else {
-//     $_SESSION['message'] = "この団体は存在しません。1";
-//     header("Location: index.php");  // メイン画面へ遷移
-//     exit();
-// }
+            $research = array(); // 調査情報入れる変数
+            $research_count = 0; // 調査数
 
-// // ログイン状態チェック
-// if (isset($_SESSION["ID"])) {
-//     // ID、ユーザ名の格納
-//     $loginID = $_SESSION['ID'];
-//     $loginName = $_SESSION['name'];
-//     $login = true;
+            // 調査情報格納
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $research[] = array('researchName' => $row['name'], 'researchID' => $row['researchID'], 'researchStart' => $row['researchStart'], 'researchEnd' => $row['researchEnd'], 'researchOverview' => $row['researchOverview'], 'private' => $row['private']);
+                $research_count++;
+            }
+        } else {
+            $_SESSION['message'] = "この団体は存在しません。";
+            header("Location: index.php"); // メイン画面へ遷移
+            exit();
+        }
+    } catch (PDOException $e) {
+        $errorMessage = 'データベースエラーが発生しました。';
+        // $e->getMessage() でエラー内容を参照可能（デバッグ時のみ表示）
+        // echo $e->getMessage();
+    }
+} else {
+    $_SESSION['message'] = "この団体は存在しません。1";
+    header("Location: index.php"); // メイン画面へ遷移
+    exit();
+}
 
-//     // 認証
-//     $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
+// ログイン状態チェック
+if (isset($_SESSION["ID"])) {
+    // ID、ユーザ名の格納
+    $loginID = $_SESSION['ID'];
+    $loginName = $_SESSION['name'];
+    $login = true;
 
-//     // エラー処理
-//     try {
-//         $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION));
+    // 認証
+    $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
 
-//         // ログインユーザのコミュニティ情報取得
-//         $stmt = $pdo->prepare('SELECT * FROM community_member WHERE userID = ? && communityID = ?');
-//         $stmt->execute(array($loginID, $pageID));
+    // エラー処理
+    try {
+        $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
 
-//         // ユーザがコミュニティに所属しているか確認
-//         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-//             $settingDisplay = "none";
-//             if (strcmp($row['userRole'], "admin") == 0) {
-//                 $settingAdminDisplay = "";
-//             }
-//         }
-//     } catch (PDOException $e) {
-//         $errorMessage = 'データベースエラーが発生しました。';
-//         // $e->getMessage() でエラー内容を参照可能（デバッグ時のみ表示）
-//         // echo $e->getMessage();
-//     }
-// }
+        // ログインユーザのコミュニティ情報取得
+        $stmt = $pdo->prepare('SELECT * FROM community_member WHERE userID = ? && communityID = ?');
+        $stmt->execute(array($loginID, $pageID));
 
-// // コミュニティ参加ボタンが押されたとき
-// if (isset($_POST["join"])) {
-//     if (isset($_SESSION["ID"])) {
-//         // 認証
-//         $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
+        // ユーザがコミュニティに所属しているか確認
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $settingDisplay = "none";
+            if (strcmp($row['userRole'], "admin") == 0) {
+                $settingAdminDisplay = "";
+            }
+        }
+    } catch (PDOException $e) {
+        $errorMessage = 'データベースエラーが発生しました。';
+        // $e->getMessage() でエラー内容を参照可能（デバッグ時のみ表示）
+        // echo $e->getMessage();
+    }
+}
 
-//         // エラー処理
-//         try {
-//             // 今日ってなんの日
-//             $date = date("Y/m/d");
-//             $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION));
+// コミュニティ参加ボタンが押されたとき
+if (isset($_POST["join"])) {
+    if (isset($_SESSION["ID"])) {
+        // 認証
+        $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
 
-//             // メンバーテーブルにユーザ情報を追加
-//             $stmt = $pdo->prepare("INSERT INTO community_member(communityID, userID, userRole, date) VALUES (?, ?, ?, ?)");
-//             $stmt->execute(array($communityID, $loginID, "general", $date));
+        // エラー処理
+        try {
+            // 今日ってなんの日
+            $date = date("Y/m/d");
+            $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
 
-//             // 更新処理
-//             header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $pageID);
-//         } catch (PDOException $e) {
-//             $errorMessage = 'データベースエラー';
-//             // $e->getMessage(); //エラー内容を参照可能（デバッグ時のみ表示）
-//       // echo $e->getMessage();
-//         }
-//     } else {
-//         $_SESSION['message'] = "コミュニティに参加するにはログインが必要です。";
-//         header("Location: login.php");  // ログイン画面へ遷移
-//         exit();
-//     }
-// }
+            // メンバーテーブルにユーザ情報を追加
+            $stmt = $pdo->prepare("INSERT INTO community_member(communityID, userID, userRole, date) VALUES (?, ?, ?, ?)");
+            $stmt->execute(array($communityID, $loginID, "general", $date));
 
-// // 検証者認定ボタンが押されたとき
-// if (isset($_POST['changeRole'])) {
-//     // 変更するユーザIDを格納
-//     $changeUserID = $_POST['userID'];
+            // 更新処理
+            header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $pageID);
+        } catch (PDOException $e) {
+            $errorMessage = 'データベースエラー';
+            // $e->getMessage(); //エラー内容を参照可能（デバッグ時のみ表示）
+            // echo $e->getMessage();
+        }
+    } else {
+        $_SESSION['message'] = "コミュニティに参加するにはログインが必要です。";
+        header("Location: login.php"); // ログイン画面へ遷移
+        exit();
+    }
+}
 
-//     // 認証
-//     $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
+// 検証者認定ボタンが押されたとき
+if (isset($_POST['changeRole'])) {
+    // 変更するユーザIDを格納
+    $changeUserID = $_POST['userID'];
 
-//     // エラー処理
-//     try {
-//         $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION));
+    // 認証
+    $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
 
-//         // コミュニティテーブルの情報を更新
-//         $stmt = $pdo->prepare("UPDATE community_member set userRole = ? WHERE userID = ?");
-//         $stmt->execute(array("verifier", $changeUserID));
+    // エラー処理
+    try {
+        $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
 
-//         // 更新処理
-//         header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $pageID);
-//     } catch (PDOException $e) {
-//         $errorMessage = 'データベースエラー';
-//         // $e->getMessage(); //エラー内容を参照可能（デバッグ時のみ表示）
-//         // echo $e->getMessage();
-//     }
-// }
+        // コミュニティテーブルの情報を更新
+        $stmt = $pdo->prepare("UPDATE community_member set userRole = ? WHERE userID = ?");
+        $stmt->execute(array("verifier", $changeUserID));
 
-// // 除名ボタンが押されたとき
-// if (isset($_POST['deleteMember'])) {
-//     // 変更するユーザIDを格納
-//     $deleteMemberID = $_POST['userID'];
+        // 更新処理
+        header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $pageID);
+    } catch (PDOException $e) {
+        $errorMessage = 'データベースエラー';
+        // $e->getMessage(); //エラー内容を参照可能（デバッグ時のみ表示）
+        // echo $e->getMessage();
+    }
+}
 
-//     // 認証
-//     $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
+// 除名ボタンが押されたとき
+if (isset($_POST['deleteMember'])) {
+    // 変更するユーザIDを格納
+    $deleteMemberID = $_POST['userID'];
 
-//     // エラー処理
-//     try {
-//         $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION));
+    // 認証
+    $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
 
-//         // コミュニティテーブルの情報を更新
-//         $stmt = $pdo->prepare("DELETE FROM community_member WHERE (userID = ? AND communityID = ?)");
-//         $stmt->execute(array($deleteMemberID, $pageID));
+    // エラー処理
+    try {
+        $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
 
-//         // 更新処理
-//         header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $pageID);
-//     } catch (PDOException $e) {
-//         $errorMessage = 'データベースエラー';
-//         // $e->getMessage(); //エラー内容を参照可能（デバッグ時のみ表示）
-//         // echo $e->getMessage();
-//     }
-// }
+        // コミュニティテーブルの情報を更新
+        $stmt = $pdo->prepare("DELETE FROM community_member WHERE (userID = ? AND communityID = ?)");
+        $stmt->execute(array($deleteMemberID, $pageID));
 
-// // 設定更新ボタンが押されたとき
-// if (isset($_POST['update'])) {
-//     $updateName = $_POST['name'];
-//     $updateOverview = $_POST['overview'];
-//     $updateTag = $_POST['tag'];
-//     $updatePoint = $_POST['point'];
+        // 更新処理
+        header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $pageID);
+    } catch (PDOException $e) {
+        $errorMessage = 'データベースエラー';
+        // $e->getMessage(); //エラー内容を参照可能（デバッグ時のみ表示）
+        // echo $e->getMessage();
+    }
+}
 
-//     // 認証
-//     $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
+// 設定更新ボタンが押されたとき
+if (isset($_POST['update'])) {
+    $updateName = $_POST['name'];
+    $updateOverview = $_POST['overview'];
+    $updateTag = $_POST['tag'];
+    $updatePoint = $_POST['point'];
 
-//     // エラー処理
-//     try {
-//         $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION));
+    // 認証
+    $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
 
-//         // コミュニティテーブルの情報を更新
-//         $stmt = $pdo->prepare("UPDATE community set name = ?, overview = ?, tag = ?, point = ? WHERE communityID = ?");
-//         $stmt->execute(array($updateName, $updateOverview, $updateTag, $updatePoint, $pageID));
+    // エラー処理
+    try {
+        $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
 
-//         // 更新処理
-//         header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $pageID);
-//     } catch (PDOException $e) {
-//         $errorMessage = 'データベースエラー';
-//         // $e->getMessage(); //エラー内容を参照可能（デバッグ時のみ表示）
-//         // echo $e->getMessage();
-//     }
-// }
+        // コミュニティテーブルの情報を更新
+        $stmt = $pdo->prepare("UPDATE community set name = ?, overview = ?, tag = ?, point = ? WHERE communityID = ?");
+        $stmt->execute(array($updateName, $updateOverview, $updateTag, $updatePoint, $pageID));
 
-// // 詳細報告が押された時
-// if (isset($_POST['']))
-
-// try{
-//   $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION));
-//   $sql = "INSERT INTO syousai (
-//      community_id, name, url, start, end, type
-//   ) VALUES (
-//     community_id, '詳細調査', 'url', '1', '12'
-// , '通年'  )";
-// $res = $dbh->query($sql);
-// header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $pageID);
-//     } catch (PDOException $e) 
-// }
-
+        // 更新処理
+        header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $pageID);
+    } catch (PDOException $e) {
+        $errorMessage = 'データベースエラー';
+        // $e->getMessage(); //エラー内容を参照可能（デバッグ時のみ表示）
+        // echo $e->getMessage();
+    }
+}
 
 ?>
 
@@ -334,12 +317,12 @@
                 <li class="user-footer">
                   <div class="pull-right">
                     <?php
-                    if ($login) {
-                        echo '<a href="logout.php" class="btn btn-default btn-flat">ログアウト</a>';
-                    } else {
-                        echo '<a href="login.php" class="btn btn-default btn-flat">ログイン</a>';
-                    }
-                    ?>
+if ($login) {
+    echo '<a href="logout.php" class="btn btn-default btn-flat">ログアウト</a>';
+} else {
+    echo '<a href="login.php" class="btn btn-default btn-flat">ログイン</a>';
+}
+?>
                   </div>
                 </li>
               </ul>
@@ -391,8 +374,8 @@
         <div class="box box-widget widget-user">
           <!-- Add the bg color to the header using any of the bg-* classes -->
           <div class="widget-user-header bg-aqua-active">
-            <h3 class="widget-user-username text-center"><?php echo htmlspecialchars($communityName, ENT_QUOTES)?></h3>
-            <h5 class="widget-user-desc text-center"><?php echo htmlspecialchars($tag, ENT_QUOTES)?></h5>
+            <h3 class="widget-user-username text-center"><?php echo htmlspecialchars($communityName, ENT_QUOTES) ?></h3>
+            <h5 class="widget-user-desc text-center"><?php echo htmlspecialchars($tag, ENT_QUOTES) ?></h5>
           </div>
           <!--
           <div class="widget-user-image">
@@ -434,14 +417,14 @@
                 <strong><i class="fa fa-book margin-r-5"></i> 団体概要</strong>
 
                 <p class="text-muted">
-                  <?php echo htmlspecialchars($communityOverview, ENT_QUOTES);?>
+                  <?php echo htmlspecialchars($communityOverview, ENT_QUOTES); ?>
                 </p>
 
                 <hr>
 
                 <strong><i class="fa fa-map-marker margin-r-5"></i> 主な活動地点</strong>
 
-                <p class="text-muted"><?php echo htmlspecialchars($point, ENT_QUOTES);?></p>
+                <p class="text-muted"><?php echo htmlspecialchars($point, ENT_QUOTES); ?></p>
 
                 <hr>
 
@@ -465,7 +448,7 @@
                     </div>
                     <div class="modal-body">
                       <h5>参加するにはコミュニティが設定したメンバー除名ポリシーに従う必要があります。</h5>
-                      <p><?php echo htmlspecialchars($policy, ENT_QUOTES)?></p>
+                      <p><?php echo htmlspecialchars($policy, ENT_QUOTES) ?></p>
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-default pull-left" data-dismiss="modal">キャンセル</button>
@@ -487,19 +470,20 @@
                 <li class="active"><a href="#activity" data-toggle="tab" aria-expanded="true" style="">アクティビティ</a></li>
                 <li class=""><a href="#timeline" data-toggle="tab" style="" aria-expanded="false">メンバー</a></li>
                 <li class="" style="display: <?php echo $settingAdminDisplay; ?>"><a href="#settings" data-toggle="tab" style="" aria-expanded="false">団体設定</a></li>
-                <li class="" style="display: "><a href="#discribe" data-toggle="tab" style="" aria-expanded="false">調査機能説明</a></li>
               </ul>
               <div class="tab-content">
                 <div class="tab-pane active" id="activity">
                   <div style="display: <?php echo $settingAdminDisplay; ?>">
-                    <!-- <form class="" action="newresearch-general.php" method="post"> --> -->
-                      <input type="text" class="form-control" id="inputName" placeholder="Name" name="communityID" value="<?php echo htmlspecialchars($pageID, ENT_QUOTES)?>" style="display: none">
-                      <button type="submit" onclick="location.href='./newresearch-general.php'" class="btn btn-success btn-block btn-lg">新規調査実施</button>
-                      <button type="submit" onclick="location.href='./newresearch-general.php'" class="btn btn-success btn-block btn-lg">漂着物調査</button>
-                      <button type="submit" onclick="location.href='./newresearch-general.php'" class="btn btn-success btn-block btn-lg">活動報告</button>
-                      <button type="submit" onclick="location.href='./newresearch-general.php'" class="btn btn-success btn-block btn-lg">現状報告</button>
-                      <button type="submit" onclick="location.href='./newresearch-general.php'" class="btn btn-success btn-block btn-lg">地図統合作成</button>
-                      <button type="submit"  class="btn btn-success btn-block btn-lg">詳細報告</button>
+                    <form class="" action="newresearch-general.php" method="post">
+                      <input type="text" class="form-control" id="inputName" placeholder="Name" name="communityID" value="<?php echo htmlspecialchars($pageID, ENT_QUOTES) ?>" style="display: none">
+                      <button type="submit" class="btn btn-success btn-block btn-lg">特定生物分布調査実施</button>
+<button type="submit" class="btn btn-success btn-block btn-lg">漂着物調査実施</button>
+<button type="submit" class="btn btn-success btn-block btn-lg">活動報告調査実施</button>
+<button type="submit" class="btn btn-success btn-block btn-lg">状況報告調査実施</button>
+<button type="submit" class="btn btn-success btn-block btn-lg">地図統合実施</button>
+<button type="submit" class="btn btn-success btn-block btn-lg">詳細報告調査実施</button>
+
+
                     </form>
                   </div>
                   <hr>
@@ -515,32 +499,32 @@
                           <th>調査リンク</th>
                         </tr>
                         <?php
-                        foreach ($research as $key => $val) {
-                            $month = (int)date("m");
-                            if ($val['researchStart'] <= $val['researchEnd']) {
-                                // code...
-                                if (($val['researchStart'] <= $month) && ($month <= $val['researchEnd'])) {
-                                    $status = "調査中";
-                                    $statusCollor = "success";
-                                } else {
-                                    $status = "調査期間外";
-                                    $statusCollor = "danger";
-                                }
-                            } else {
-                                if (($val['researchStart'] <= $month) && ($month >= $val['researchEnd'])) {
-                                    $status = "調査中";
-                                    $statusCollor = "success";
-                                } else {
-                                    $status = "調査期間外";
-                                    $statusCollor = "danger";
-                                }
-                            }
+foreach ($research as $key => $val) {
+    $month = (int) date("m");
+    if ($val['researchStart'] <= $val['researchEnd']) {
+        // code...
+        if (($val['researchStart'] <= $month) && ($month <= $val['researchEnd'])) {
+            $status = "調査中";
+            $statusCollor = "success";
+        } else {
+            $status = "調査期間外";
+            $statusCollor = "danger";
+        }
+    } else {
+        if (($val['researchStart'] <= $month) && ($month >= $val['researchEnd'])) {
+            $status = "調査中";
+            $statusCollor = "success";
+        } else {
+            $status = "調査期間外";
+            $statusCollor = "danger";
+        }
+    }
 
-                            if ($val['private'] != 1) {
-                              $status = "非公開";
-                              $statusCollor = "warning";
-                            }
-                            echo <<<EOM
+    if ($val['private'] != 1) {
+        $status = "非公開";
+        $statusCollor = "warning";
+    }
+    echo <<<EOM
                         <tr>
                           <td>{$val['researchID']}</td>
                           <td>{$val['researchStart']} ~ {$val['researchEnd']}</td>
@@ -549,8 +533,8 @@
                           <td><button type="button" class="btn btn-info btn-flat" onclick="location.href='research-top.php?id={$val['researchID']}'">Go!</button></td>
                         </tr>
 EOM;
-                        }
-                        ?>
+}
+?>
                       </tbody>
                     </table>
                   </div>
@@ -581,21 +565,21 @@ EOM;
                           </thead>
                           <tbody>
                             <?php
-                            foreach ($communityMember as $key => $val) {
-                                $role = "";
-                                $cahngeRoleDisabled = "";
-                                $deleteMemberDisabled = "";
-                                if (strcmp($val['role'], "admin") == 0) {
-                                    $role = "管理者";
-                                    $cahngeRoleDisabled = "disabled";
-                                    $deleteMemberDisabled = "disabled";
-                                } elseif (strcmp($val['role'], "verifier") == 0) {
-                                    $role = "検証者";
-                                    $cahngeRoleDisabled = "disabled";
-                                } else {
-                                    $role = "一般";
-                                }
-                                echo <<<EOM
+foreach ($communityMember as $key => $val) {
+    $role = "";
+    $cahngeRoleDisabled = "";
+    $deleteMemberDisabled = "";
+    if (strcmp($val['role'], "admin") == 0) {
+        $role = "管理者";
+        $cahngeRoleDisabled = "disabled";
+        $deleteMemberDisabled = "disabled";
+    } elseif (strcmp($val['role'], "verifier") == 0) {
+        $role = "検証者";
+        $cahngeRoleDisabled = "disabled";
+    } else {
+        $role = "一般";
+    }
+    echo <<<EOM
                                 <tr role="row">
                                 <form action="" method="post">
                                   <input type="hidden" name="userID" value="{$val['id']}">
@@ -609,8 +593,8 @@ EOM;
                                 </form>
                                 </tr>
 EOM;
-                            }
-                            ?>
+}
+?>
                           </tbody>
                           <tfoot>
                             <tr>
@@ -636,28 +620,28 @@ EOM;
                       <label for="inputName" class="col-sm-2 control-label">コミュニティ名</label>
 
                       <div class="col-sm-10">
-                        <input type="text" class="form-control" id="inputName" placeholder="Name" name="name" value="<?php echo htmlspecialchars($communityName, ENT_QUOTES)?>">
+                        <input type="text" class="form-control" id="inputName" placeholder="Name" name="name" value="<?php echo htmlspecialchars($communityName, ENT_QUOTES) ?>">
                       </div>
                     </div>
                     <div class="form-group">
                       <label for="inputSkills" class="col-sm-2 control-label">コミュニティ概要</label>
 
                       <div class="col-sm-10">
-                        <textarea class="form-control" rows="3" placeholder="Enter ..." name="overview"><?php echo htmlspecialchars($communityOverview, ENT_QUOTES)?></textarea>
+                        <textarea class="form-control" rows="3" placeholder="Enter ..." name="overview"><?php echo htmlspecialchars($communityOverview, ENT_QUOTES) ?></textarea>
                       </div>
                     </div>
                     <div class="form-group">
                       <label for="inputSkills" class="col-sm-2 control-label">登録タグ</label>
 
                       <div class="col-sm-10">
-                        <input type="text" class="form-control" id="inputSkills" placeholder="TAG" name="tag" value="<?php echo htmlspecialchars($tag, ENT_QUOTES)?>">
+                        <input type="text" class="form-control" id="inputSkills" placeholder="TAG" name="tag" value="<?php echo htmlspecialchars($tag, ENT_QUOTES) ?>">
                       </div>
                     </div>
                     <div class="form-group">
                       <label for="inputSkills" class="col-sm-2 control-label">主な活動地点</label>
 
                       <div class="col-sm-10">
-                        <input type="text" class="form-control" id="inputSkills" placeholder="point" name="point" value="<?php echo htmlspecialchars($point, ENT_QUOTES)?>">
+                        <input type="text" class="form-control" id="inputSkills" placeholder="point" name="point" value="<?php echo htmlspecialchars($point, ENT_QUOTES) ?>">
                       </div>
                     </div>
                     <div class="form-group">

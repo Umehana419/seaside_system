@@ -23,200 +23,205 @@ if (isset($_SESSION["ID"])) {
 }
 
 // パラメータの確認
-// if (isset($_GET['id'])) {
-//     $activityID = $_GET['id'];
+if (isset($_GET['id'])) {
+    $mediaID = $_GET['id'];
+// echo $mediaID;
+    // 年パラメータチェック
+    if (isset($_GET['year'])) {
+        if (is_numeric($_GET['year'])) {
+            if (checkdate(1, 1, $_GET['year'])) {
+                $researchYear = $_GET['year'];
+            } else {
+                $researchYear = "";
+            }
+        } else {
+            $researchYear = "";
+        }
+    } else {
+        $researchYear = "";
+    }
 
-//     // 年パラメータチェック
-//     if (isset($_GET['year'])) {
-//         if (is_numeric($_GET['year'])) {
-//             if (checkdate(1, 1, $_GET['year'])) {
-//                 $researchYear = $_GET['year'];
-//             } else {
-//                 $researchYear = "";
-//             }
-//         } else {
-//             $researchYear = "";
-//         }
-//     } else {
-//         $researchYear = "";
-//     }
+    $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
 
-//     $dsn = sprintf('mysql: host=%s; dbname=%s; charset=utf8', $db['host'], $db['dbname']);
+    try {
+        $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION));
 
-//     try {
-//         $pdo = new PDO($dsn, $db['user'], $db['pass'], array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION));
+        // 調査情報の取得
+       // $stmt = $pdo->prepare('SELECT *, research.name as researchName FROM research LEFT JOIN community on research.communityID = community.communityID WHERE activityID = ?');
+       $stmt = $pdo->prepare('SELECT * FROM media_search WHERE mediaID = ?');
+       $stmt->execute(array($mediaID));
 
-//         // 調査情報の取得
-//        // $stmt = $pdo->prepare('SELECT *, research.name as researchName FROM research LEFT JOIN community on research.communityID = community.communityID WHERE activityID = ?');
-//        $stmt = $pdo->prepare('SELECT * FROM activity WHERE activityID = ?');
-//        $stmt->execute(array($activityID));
+       
 
-//         // 取得確認
-//         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-//            // $communityID = $row['communityID'];
-//            // $communityName = $row['name'];
-//             $activ_name = $row['activ_name'];
-//             $activ_details = $row['activ_details'];
-//            // $researchType = $row['researchType'];
-//             $start = $row['researchStart'];
-//             $end = $row['researchEnd'];
-//             $activ_target = $row['activ_target'];
-//             $activ_overview = $row['activ_overview'];
-//             //$targetType = $row['targetType'];
-//             $activ_Date = $row['date'];
-//             //$private = $row['private'];
-//             $userRole = 0; // trueが1だったり0だったりしてややこしい
+        // 取得確認
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+           // $communityID = $row['communityID'];
+           // $communityName = $row['name'];
+            $media_name = $row['media_name'];
+            $media_details = $row['media_details'];
+          //  $researchType = $row['researchType'];
+            $media_target = $row['media_target'];
+            $media_overview = $row['media_overview'];
+            //$targetType = $row['targetType'];
+            $media_date = $row['date'];
+            $start = $row['media_start'];
+            $end = $row['media_end'];
+            //$private = $row['private'];
+            $userRole = 0; // trueが1だったり0だったりしてややこしい
+// echo $media_name;
+// echo $media_details;
+            // ログインユーザの権限確認
+            $stmt = $pdo->prepare('SELECT * FROM community_member WHERE communityID = ? && userID = ?');
+            $stmt->execute(array($communityID, $loginID));
 
-//             // ログインユーザの権限確認
-//             $stmt = $pdo->prepare('SELECT * FROM community_member WHERE communityID = ? && userID = ?');
-//             $stmt->execute(array($communityID, $loginID));
+            if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                if (strcmp($row['userRole'], "admin") == 0) {
+                    // Adminであれば
+                    $settingDisplay = "";
+                    $userRole = 1;
+                }
+            }
 
-//             if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-//                 if (strcmp($row['userRole'], "admin") == 0) {
-//                     // Adminであれば
-//                     $settingDisplay = "";
-//                     $userRole = 1;
-//                 }
-//             }
+            // 単年度調査の処理
+            // if (strcmp($researchType, "single") == 0) {
+            //     // 年月日データを数値に変換（+10000で一年後の日付）
+            //     $doomsday = (int)str_replace('/', '', $researchDate) + 10000;
+            //     $now = (int)date("Ymd");
+            //     if ($private == 1) {
+            //         if ($doomsday < $now) {
+            //             // 調査情報アップデート
+            //             $stmt = $pdo->prepare('UPDATE research SET private = -1 WHERE activityID = ?');
+            //             $stmt->execute(array($activityID));
 
-//             // 単年度調査の処理
-//             // if (strcmp($researchType, "single") == 0) {
-//             //     // 年月日データを数値に変換（+10000で一年後の日付）
-//             //     $doomsday = (int)str_replace('/', '', $researchDate) + 10000;
-//             //     $now = (int)date("Ymd");
-//             //     if ($private == 1) {
-//             //         if ($doomsday < $now) {
-//             //             // 調査情報アップデート
-//             //             $stmt = $pdo->prepare('UPDATE research SET private = -1 WHERE activityID = ?');
-//             //             $stmt->execute(array($activityID));
+            //             $private = -1;
+            //         }
+            //     }
+            // }
 
-//             //             $private = -1;
-//             //         }
-//             //     }
-//             // }
+            // 非公開設定かつ管理者以外の場合
+            // if (($private == -1) && ($userRole == 0)) {
+            //     $_SESSION['message'] = "この調査は非公開です。";
+            //     header("Location: index.php");  // メイン画面へ遷移
+            //     exit();
+            // }
 
-//             // 非公開設定かつ管理者以外の場合
-//             // if (($private == -1) && ($userRole == 0)) {
-//             //     $_SESSION['message'] = "この調査は非公開です。";
-//             //     header("Location: index.php");  // メイン画面へ遷移
-//             //     exit();
-//             // }
+            $reportYear = array();
 
-//             $reportYear = array();
+            // 全ての報告情報の取得（省略可能）
+            $stmt = $pdo->prepare('SELECT * FROM media_report WHERE mediaID = :ID');
+            $stmt->execute(array(':ID' => $mediaID));
 
-//             // 全ての報告情報の取得（省略可能）
-//             $stmt = $pdo->prepare('SELECT * FROM activ_report WHERE activityID = :ID');
-//             $stmt->execute(array(':ID' => $activityID));
+            // while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            //     // 年以外の要素を除外して配列に格納
+            //     array_push($reportYear, preg_replace('/\/\d\d\/\d\d\s\d\d:\d\d:\d\d/', '', $row['date']));
+            // }
 
-//             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-//                 // 年以外の要素を除外して配列に格納
-//                 array_push($reportYear, preg_replace('/\/\d\d\/\d\d\s\d\d:\d\d:\d\d/', '', $row['date']));
-//             }
+            // // 年度ごとの報告情報の取得（年度未指定の場合全期間）
+            // $stmt = $pdo->prepare('SELECT *, report.reportID AS reportID FROM report LEFT JOIN user ON report.userID = user.userID LEFT JOIN report_media ON report.reportID = report_media.reportID WHERE (activityID = :ID) && (date LIKE :year) && (private = 1) ORDER BY date');
+            // $stmt->execute(array(':ID' => $activityID, ':year' => $researchYear . '%'));
 
-//             // // 年度ごとの報告情報の取得（年度未指定の場合全期間）
-//             // $stmt = $pdo->prepare('SELECT *, report.reportID AS reportID FROM report LEFT JOIN user ON report.userID = user.userID LEFT JOIN report_media ON report.reportID = report_media.reportID WHERE (activityID = :ID) && (date LIKE :year) && (private = 1) ORDER BY date');
-//             // $stmt->execute(array(':ID' => $activityID, ':year' => $researchYear . '%'));
+            $reportCount = 0;
+            $reportAry = array();
+            $userCountAry = array();
+            $reportDateAry = array();
+            $lavel = "";
+            $reportData = "";
+            $reportDataSum = "";
+            $sum = 0;
 
-//             $reportCount = 0;
-//             $reportAry = array();
-//             $userCountAry = array();
-//             $reportDateAry = array();
-//             $lavel = "";
-//             $reportData = "";
-//             $reportDataSum = "";
-//             $sum = 0;
+            // 検証結果取得用のprepare
+            // $stmt2 = $pdo->prepare('SELECT * FROM validation WHERE reportID = ?');
 
-//             // 検証結果取得用のprepare
-//             // $stmt2 = $pdo->prepare('SELECT * FROM validation WHERE reportID = ?');
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            //     $agree = 0;
+            //     $disagree= 0;
 
-//             // while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-//             //     $agree = 0;
-//             //     $disagree= 0;
+            //     // 検証結果取得
+            //     $stmt2->execute(array($row['reportID']));
 
-//             //     // 検証結果取得
-//             //     $stmt2->execute(array($row['reportID']));
+            //     while ($row2 = $stmt2->fetch(PDO::FETCH_ASSOC)) {
+            //         if ($row2['result'] == 1) {
+            //             $agree++;
+            //         } else {
+            //             $disagree++;
+            //         }
+            //     }
 
-//             //     while ($row2 = $stmt2->fetch(PDO::FETCH_ASSOC)) {
-//             //         if ($row2['result'] == 1) {
-//             //             $agree++;
-//             //         } else {
-//             //             $disagree++;
-//             //         }
-//             //     }
+            //     // 承認済みであれば情報を格納
+            //     if ($agree > $disagree) {
+                    $reportCount++;
+            //         // 年月日以外の要素を除外して配列に格納
+                    array_push($reportDateAry, preg_replace('/\s\d\d:\d\d:\d\d/', '', $row['date']));
+            //         // ユーザ情報の格納
+            //         array_push($userCountAry, $row['userID']);
+            $_SESSION["login_id"] = "id00001";
+                    $comment = '<p>報告日:'. $row['date'] . '<br>報告者:'. $row['media_user'] .'</p>';
+                    $comment .= '<a href="media-report-detail.php?id='. $mediaID .'&report='. $row['media_reID'] .'">詳細情報を確認</a>';
 
-//             //     // 承認済みであれば情報を格納
-//             //     if ($agree > $disagree) {
-//             //         $reportCount++;
-//             //         // 年月日以外の要素を除外して配列に格納
-//             //         array_push($reportDateAry, preg_replace('/\s\d\d:\d\d:\d\d/', '', $row['date']));
-//             //         // ユーザ情報の格納
-//             //         array_push($userCountAry, $row['userID']);
+            //         // マップピン情報を格納
+                    $reportAry[] = array('lat' => $row['lat'], 'lng' => $row['lng'], 'comment' => $comment, 'media_user' => $row['media_user']);
+                }
+            // }
 
-//             //         $comment = '<img src="'. $row['media'] .'" class="img-responsive" alt=""><p>報告日:'. $row['date'] . '<br>発見者:'. $row['name'] .'</p>';
-//             //         $comment .= '<a href="research-report-detail.php?id='. $activityID .'&report='. $row['reportID'] .'">詳細情報を確認</a>';
+            // 報告が0件のときの処理
+            if (empty($reportAry)) {
+                // ダミーデータの格納
+                $reportAry[] = array('lat' => 39.80263880587395, 'lng' => 141.13756477832797, 'comment' => "※このデータは報告が0件のときに表示されるダミーデータです。");
+                // Javascriptで扱えるようにJSON形式に変換
+                $report = json_encode($reportAry);
+            } else {
+                // Javascriptで扱えるようにJSON形式に変換
+                $report = json_encode($reportAry);
+            }
 
-//             //         // マップピン情報を格納
-//             //         $reportAry[] = array('lat' => $row['lat'], 'lng' => $row['lng'], 'comment' => $comment, 'number' => $row['number']);
-//             //     }
-//             // }
+            // チャート用の情報処理
+            foreach (array_count_values($reportDateAry) as $key => $value) {
+                $sum += $value;
+                // チャートラベルの作成
+                $lavel .= '"' . $key . '",';
+                // 1日単位のチャートデータの作成
+                $reportData .= $value . ',';
+                // 累計でのチャートデータの作成
+                $reportDataSum .= $sum . ',';
+            }
 
-//             // 報告が0件のときの処理
-//             if (empty($reportAry)) {
-//                 // ダミーデータの格納
-//                 $reportAry[] = array('lat' => 39.80263880587395, 'lng' => 141.13756477832797, 'comment' => "※このデータは報告が0件のときに表示されるダミーデータです。", 'number' => 0);
-//                 // Javascriptで扱えるようにJSON形式に変換
-//                 $report = json_encode($reportAry);
-//             } else {
-//                 // Javascriptで扱えるようにJSON形式に変換
-//                 $report = json_encode($reportAry);
-//             }
+            // チャート用に作成したデータの最後のカンマを取り除く
+            $lavel = rtrim($lavel, ',');
+            $reportData = rtrim($reportData, ',');
+            $reportDataSum = rtrim($reportDataSum, ',');
 
-//             // チャート用の情報処理
-//             foreach (array_count_values($reportDateAry) as $key => $value) {
-//                 $sum += $value;
-//                 // チャートラベルの作成
-//                 $lavel .= '"' . $key . '",';
-//                 // 1日単位のチャートデータの作成
-//                 $reportData .= $value . ',';
-//                 // 累計でのチャートデータの作成
-//                 $reportDataSum .= $sum . ',';
-//             }
+            // 重複した値の除去
+            $result = array_unique($userCountAry);
+            // ユーザ数の格納
+            $userCount = count($result);
 
-//             // チャート用に作成したデータの最後のカンマを取り除く
-//             $lavel = rtrim($lavel, ',');
-//             $reportData = rtrim($reportData, ',');
-//             $reportDataSum = rtrim($reportDataSum, ',');
+        } else {
+            $_SESSION['message'] = "この調査は存在しません。";
+            header("Location: index.php");  // メイン画面へ遷移
+            exit();
+        }
+    } catch (PDOException $e) {
+        $errorMessage = 'データベースエラーが発生しました。';
+        $e->getMessage(); // エラー内容を参照可能（デバッグ時のみ表示）
+        echo $e->getMessage();
+    }
+} else {
+    $_SESSION['message'] = "この調査は存在しません。";
+    header("Location: index.php");  // メイン画面へ遷移
+    exit();
+}
+$media_name = array();
+$media = array(); // 調査情報入れる変数
+$stmt = $pdo->prepare('SELECT * FROM media_search WHERE mediaID = ?');
+$stmt->execute(array($mediaID));
 
-//             // 重複した値の除去
-//             $result = array_unique($userCountAry);
-//             // ユーザ数の格納
-//             $userCount = count($result);
-
-//         } else {
-//             $_SESSION['message'] = "この調査は存在しません。";
-//             header("Location: index.php");  // メイン画面へ遷移
-//             exit();
-//         }
-//     } catch (PDOException $e) {
-//         $errorMessage = 'データベースエラーが発生しました。';
-//         $e->getMessage(); // エラー内容を参照可能（デバッグ時のみ表示）
-//         echo $e->getMessage();
-//     }
-// } else {
-//     $_SESSION['message'] = "この調査は存在しません。";
-//     header("Location: index.php");  // メイン画面へ遷移
-//     exit();
-// }
-// $activ_name = array();
-// $activity = array(); // 調査情報入れる変数
-// $stmt = $pdo->prepare('SELECT * FROM activity WHERE activityID = ?');
-// $stmt->execute(array($activityID));
-
-// while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-//   array_push($activ_name, $row['name']);
-//   $activity[] = array('activ_name' => $row['activ_name'], 'activityID' => $row['activityID'], 'researchStart' => $row['researchStart'], 'researchEnd' => $row['researchEnd'], 'activ_details' => $row['activ_details']);
-// }
-// foreach ($activity as $key => $value)
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+  array_push($media_name, $row['name']);
+  $media[] = array('media_name' => $row['media_name'], 'mediaID' => $row['mediaID'], 'media_start' => $row['media_start'], 'media_end' => $row['media_end'], 'media_details' => $row['media_details']);
+}
+foreach ($media as $key => $value){
+  ;
+}
 
 ?>
 
@@ -307,8 +312,7 @@ if (isset($_SESSION["ID"])) {
         <div class="navbar-custom-menu">
           <ul class="nav navbar-nav">
             <!-- User Account Menu -->
-            
-             
+           
           </ul>
         </div>
       </nav>
@@ -360,8 +364,8 @@ if (isset($_SESSION["ID"])) {
         <div class="box box-widget widget-user">
           <!-- Add the bg color to the header using any of the bg-* classes -->
           <div class="widget-user-header bg-teal-active">
-            <h3 class="widget-user-username">海岸漂着物における詳細報告</h3>
-            <!-- <a href="community.php?id=<?php// echo $communityID; ?>" style="color: #FFF"><h5 class="widget-user-desc"><i class="fa fa-anchor margin-r-5"></i> <?php echo $communityName; ?></h5></a> -->
+            <h3 class="widget-user-username"><?php echo $value['media_name']; ?> </h3>
+            <!-- <a href="community.php?id=<?php echo $communityID; ?>" style="color: #FFF"><h5 class="widget-user-desc"><i class="fa fa-anchor margin-r-5"></i> <?php echo $communityName; ?></h5></a> -->
             <div class="pull-right" style="color: #000000">
               <!-- Buttons, labels, and many other things can be placed here! -->
               <!-- <button type="button" class="btn btn-block btn-danger btn-md" data-toggle="modal" data-target="#modal-default" <?php echo $settingDisplay; ?>>設定</button> -->
@@ -370,8 +374,8 @@ if (isset($_SESSION["ID"])) {
                 <div class="modal-dialog">
                   <div class="modal-content">
                     <div class="modal-header">
-                      <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span></button> -->
+                      <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close"> -->
+                        <!-- <span aria-hidden="true">×</span></button> -->
                       <h4 class="modal-title">調査情報の変更</h4>
                     </div>
                     <form class="" action="index.html" method="post">
@@ -384,7 +388,7 @@ if (isset($_SESSION["ID"])) {
                             <div class="input-group-addon">
                               <i class="fa fa-star"></i>
                             </div>
-                            <input type="text" class="form-control pull-right require" name="activ_name">
+                            <input type="text" class="form-control pull-right require" name="media_name">
                           </div>
                           <!-- /.input group -->
                         </div>
@@ -450,7 +454,7 @@ if (isset($_SESSION["ID"])) {
                             <div class="input-group-addon">
                               <i class="fa fa-pencil"></i>
                             </div>
-                            <textarea class="form-control" rows="3" placeholder="Enter ..." name="activ_details"></textarea>
+                            <textarea class="form-control" rows="3" placeholder="Enter ..." name="media_details"></textarea>
                           </div>
                           <!-- /.input group -->
                         </div>
@@ -463,7 +467,7 @@ if (isset($_SESSION["ID"])) {
                             <div class="input-group-addon">
                               <i class="fa fa-star"></i>
                             </div>
-                            <input type="text" class="form-control pull-right require" name="activ_name">
+                            <input type="text" class="form-control pull-right require" name="media_name">
                           </div>
                           <!-- /.input group -->
                         </div>
@@ -476,7 +480,7 @@ if (isset($_SESSION["ID"])) {
                             <div class="input-group-addon">
                               <i class="fa fa-pencil"></i>
                             </div>
-                            <textarea class="form-control" rows="3" placeholder="Enter ..." name="activ_overview"></textarea>
+                            <textarea class="form-control" rows="3" placeholder="Enter ..." name="media_overview"></textarea>
                           </div>
                           <!-- /.input group -->
                         </div>
@@ -501,13 +505,13 @@ if (isset($_SESSION["ID"])) {
           </div> -->
           <div class="box-footer">
             <strong><i class="fa fa-book margin-r-5"></i> 概要</strong>
-            <p class="text-muted">岩手県沿岸を対象にしている海岸漂着物の詳細報告シートへの記載</p>
+            <p class="text-muted"><?php echo $media_details; ?></p>
 
             <strong><i class="fa fa-map-marker margin-r-5"></i> 対象</strong>
-            <p class="text-muted">海岸漂着物</p>
+            <p class="text-muted"><?php echo $media_target; ?></p>
 
             <strong><i class="fa fa-map-marker margin-r-5"></i> 対象概要</strong>
-            <p class="text-muted">海岸漂着物</p>
+            <p class="text-muted"><?php echo $media_overview; ?></p>
 
             <!-- <strong><i class="fa fa-search margin-r-5"></i> 対象タイプ</strong>
             <p class="text-muted">
@@ -520,20 +524,108 @@ if (isset($_SESSION["ID"])) {
               ?>
             </p> -->
             <strong><i class="fa fa-file-text-o margin-r-5"></i> 期間</strong>
-            <p class="text-muted">1月 ～ 12月 </p>
+            <p class="text-muted"><?php echo $start; ?>月 ～ <?php echo $end; ?>月</p>
           </div>
         </div>
 
-        
-
-       
-
+        <!-- <span class="custom-dropdown big">
+          <select onChange="location.href=value;">
+            <option selecte value="#">年度ごとのデータを表示</option>
+            <option selecte value="research-top.php?id=<?php echo $mediaID; ?>">全期間</option>
+            <?php
+            // 重複したデータを除去して格納
+            // $year = array_unique($reportYear);
+            // foreach ($year as $key => $value) {
+            //     echo '<option value="research-top.php?id='.$mediaID.'&year='.$value.'">'.$value.'</option>';
+            // }
+            ?>
+          </select>
+        </span> -->
 
         <div class="row">
-          
+          <div class="col-lg-3 col-xs-6">
+            <!-- small box -->
+            <div class="small-box bg-aqua">
+              <div class="inner">
+                <h3><?php echo $reportCount ?><sup style="font-size: 20px">件</sup></h3>
+                <p>報告数</p>
+              </div>
+              <div class="icon">
+                <i class="ion ion-bag"></i>
+              </div>
+            </div>
+          </div>
+          <!-- ./col -->
+          <!-- <div class="col-lg-3 col-xs-6">
+            <!-small box -->
+            <!-- <div class="small-box bg-green">
+              <div class="inner">
+                <h3><?php //echo $userCount; ?><sup style="font-size: 20px">人</sup></h3>
+                <p>参加者</p>
+              </div>
+              <div class="icon">
+                <i class="ion ion-stats-bars"></i>
+              </div>
+            </div> -->
+          <!-- </div> -->
+          <!-- ./col -->
+          <!-- <div class="col-lg-3 col-xs-6"> -->
+            <!-- small box -->
+            <!-- <div class="small-box bg-yellow">
+              <div class="inner">
+                <?php
+                // if (strcmp($researchType, "series")!=0) {
+                //   echo '<h3>単年度<sup style="font-size: 20px">調査</sup></h3>';
+                // } else {
+                //   echo '<h3>継続<sup style="font-size: 20px">調査</sup></h3>';
+                // }
+                //echo $researchType;
+                ?>
+                <p>調査タイプ</p>
+              </div>
+              <div class="icon">
+                <i class="ion ion-person-add"></i>
+              </div>
+            </div>
+          </div> -->
+          <!-- ./col -->
+          <div class="col-lg-3 col-xs-6">
+            <!-- small box -->
+            <div class="small-box bg-red">
+              <div class="inner">
+                <h3><?php echo $media_date; ?><sup style="font-size: 20px"></sup></h3>
+                <p>調査開始日</p>
+              </div>
+              <div class="icon">
+                <i class="ion ion-pie-graph"></i>
+              </div>
+              <!-- <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a> -->
+            </div>
+          </div>
+          <!-- ./col -->
+        </div>
+
+        <div class="row">
+          <div class="box box-primary">
+            <div class="box-header with-border">
+              <h3 class="box-title">報告地点一覧</h3>
+              <div class="box-tools pull-right">
+                <!-- Buttons, labels, and many other things can be placed here! -->
+                <!-- Here is a label for example -->
+                <!-- <span class="label label-primary">Label</span> -->
+              </div>
+              <!-- /.box-tools -->
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body">
+              <div id='map'></div>
+            </div>
+            <!-- /.box-body -->
+          </div>
+
           <div class="box">
             <div class="box-header with-border">
-              <h3 class="box-title">報告・結果</h3>
+              <h3 class="box-title">報告</h3>
               <div class="box-tools pull-right">
                 <!-- Buttons, labels, and many other things can be placed here! -->
                 <!-- Here is a label for example -->
@@ -544,13 +636,11 @@ if (isset($_SESSION["ID"])) {
             <div class="box-body">
               <div class="row">
                 <div class="col-xs-6">
-                  <button type="button" name="button" class="btn btn-primary btn-block btn-lg" onclick="location.href='googleform.php'">報告を行う</button>
+                  <button type="button" name="button" class="btn btn-primary btn-block btn-lg" onclick="location.href='media_report.php?id=<?php echo $mediaID; ?>'">報告を行う</button>
                 </div>
-                <div class="col-xs-6">
-                  <!-- <butoon><input type="button" name="button" class="btn btn-primary btn-block btn-lg" onclick="location.href='https://docs.google.com/forms/d/1uDziqve1H6oeQAUDg9qrJhnluV4gIn51l6CiV7_Ie7M/edit?usp=sharing'" value="結果を見る"></button> -->
-                </div>
+                
                 <!-- <div class="col-xs-6">
-                  <button type="button" name="button" class="btn btn-info btn-block btn-lg" onclick="location.href='research-report.php?id=<?php //echo $activityID; ?>'">報告を見る・検証を行う</button>
+                  <button type="button" name="button" class="btn btn-info btn-block btn-lg" onclick="location.href='research-report.php?id=<?php echo $mediaID; ?>'">報告を見る・検証を行う</button>
                 </div> -->
               </div>
             </div>
@@ -561,11 +651,43 @@ if (isset($_SESSION["ID"])) {
           <!-- Left col -->
           <section class="col-lg-8 connectedSortable">
             <!-- AREA CHART -->
-            
+            <div class="box box-primary">
+              <div class="box-header with-border">
+                <h3 class="box-title">報告数（累計）</h3>
+
+                <div class="box-tools pull-right">
+                  <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                  </button>
+                  <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                </div>
+              </div>
+              <div class="box-body">
+                <div class="chart">
+                  <canvas id="chart1" style="height:400px"></canvas>
+                </div>
+              </div>
+              <!-- /.box-body -->
+            </div>
             <!-- /.box -->
 
             <!-- BAR CHART -->
-            
+            <div class="box box-primary">
+              <div class="box-header with-border">
+                <h3 class="box-title">1日あたりの報告数</h3>
+
+                <div class="box-tools pull-right">
+                  <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                  </button>
+                  <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                </div>
+              </div>
+              <div class="box-body">
+                <div class="chart">
+                  <canvas id="chart2" style="height:400px"></canvas>
+                </div>
+              </div>
+              <!-- /.box-body -->
+            </div>
             <!-- /.box -->
 
 
@@ -821,7 +943,7 @@ if (isset($_SESSION["ID"])) {
       array[i] = [];
       array[i][0] = data[i].lat;
       array[i][1] = data[i].lng;
-      array[i][2] = data[i].number;
+      array[i][2] = data[i].media_user;
       array[i][3] = data[i].comment;
     }
 

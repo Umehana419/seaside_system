@@ -60,6 +60,7 @@ if (isset($_POST["login"])) {
 
                     $_SESSION["ID"] = $userID;
                     $_SESSION["name"] = $row['name'];
+                    $_SESSION["user_label"] = $row['user_label'];
 
                     // こっからバッジ取得情報更新処理
                     $badgeAry = array(1);
